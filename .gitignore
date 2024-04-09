@@ -1,0 +1,6 @@
+temporal/*
+temporal_zone/*
+*.zip
+*.csv
+*.parquet
+*.crc
