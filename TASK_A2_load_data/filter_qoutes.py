@@ -1,7 +1,7 @@
 import csv
 
-input_file = 'authors_data_limit.csv'
-output_file = 'cleaned_authors_data_limit.csv'
+input_file = 'article_data_limit.csv'
+output_file = 'cleaned_article_data_limit.csv'
 
 with open(input_file, 'r', newline='', encoding='utf-8') as infile, \
      open(output_file, 'w', newline='', encoding='utf-8') as outfile:

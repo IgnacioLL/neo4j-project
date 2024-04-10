@@ -19,5 +19,5 @@ def extract_first_10000_rows(input_file, output_file):
 if __name__ == "__main__":
     
     
-    extract_first_10000_rows("link_reviewer_article.csv", "link_reviewer_article_limit.csv")
+    extract_first_10000_rows("edition_data.csv", "_edition_data.csv")
     
