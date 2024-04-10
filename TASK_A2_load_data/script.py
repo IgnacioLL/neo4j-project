@@ -50,6 +50,7 @@ LOAD CSV WITH HEADERS FROM 'file:///journal_data_w_rank.csv' AS row
 MERGE (j:Journal { id: row.journal })
 SET j.name = row.journal,
     j.rank = row.rank;
+    
 
 // Import Cities
 LOAD CSV WITH HEADERS FROM 'file:///city_data.csv' AS row
@@ -61,20 +62,24 @@ WITH row WHERE row.conference_name IS NOT NULL
 MERGE (c:Conference { conference_name: row.conference_name })
 SET c.name = COALESCE(row.conference_name, '')
 
+// NEED QUERY SPLIT HERE
 
 // Import Conference Editions
 LOAD CSV WITH HEADERS FROM 'file:///_edition_data.csv' AS row
 MERGE (e:Edition { name: row.conference_edition })
 SET e.city = row.city;
 
-// Edge between Conf and Edition
+// Create Relationships between Conf and Edition
 LOAD CSV WITH HEADERS FROM 'file:///_edition_data.csv' AS row
 MATCH (c:Conference { name: row.conference_name })
 MATCH (e:Edition { name: row.conference_edition, city: row.city })
 CREATE (c)-[:HAS_EDITION]->(e);
 
-
-
+// Create Relationships between Conferences and Cities
+LOAD CSV WITH HEADERS FROM 'file:///edition_data.csv' AS row
+MATCH (c:Conference { name: row.conference_name })
+MATCH (ct:City { name: row.city })
+MERGE (c)-[:HELD_IN]->(ct);
 
 
 '''
