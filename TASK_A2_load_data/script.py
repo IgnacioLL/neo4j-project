@@ -43,13 +43,12 @@ MERGE (a)-[:AUTHORED]->(p);
 
 // import time
 LOAD CSV WITH HEADERS FROM 'file:///time.csv' AS row
-MERGE (y:Year { value: toInteger(row.year) });
+MERGE (y:Year { value: row.year });
 
 // Import Journals
-LOAD CSV WITH HEADERS FROM 'file:///journal_data_w_rank.csv' AS row
-MERGE (j:Journal { id: row.journal })
-SET j.name = row.journal,
-    j.rank = row.rank;
+LOAD CSV WITH HEADERS FROM 'file:///_article_data_limit.csv' AS row
+WITH DISTINCT row.journal AS journal
+MERGE (j:Journal { name: journal })
     
 
 // Import Cities
@@ -80,6 +79,13 @@ LOAD CSV WITH HEADERS FROM 'file:///edition_data.csv' AS row
 MATCH (c:Conference { name: row.conference_name })
 MATCH (ct:City { name: row.city })
 MERGE (c)-[:HELD_IN]->(ct);
+
+// Create relationship between Paper and Journal
+LOAD CSV WITH HEADERS FROM 'file:///_article_data_limit.csv' AS row
+MATCH (p:Paper { id: row.id })
+MATCH (j:Journal)
+WHERE j.name = row.journal
+MERGE (p)-[:PUBLISHED_IN]->(j);
 
 
 '''
