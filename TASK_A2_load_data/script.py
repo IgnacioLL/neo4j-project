@@ -14,7 +14,10 @@ from queries import (
     create_relation_year_journal,
     create_citations_data,
     load_communities,
-    create_relation_paper_community
+    create_relation_paper_community,
+    create_relation_edition_year,
+    create_index_author,
+    create_index_paper
 )
 
 # Define the connection URI and credentials
@@ -33,11 +36,22 @@ def run_query(query):
 clean_slate = '''
 MATCH (n)
 DETACH DELETE n
-
 '''
+
+clean_indexes = "DROP INDEX authorNameIndex IF EXISTS"
+run_query(clean_indexes)
+
+clean_indexes = "DROP INDEX paperIdIndex IF EXISTS"
+run_query(clean_indexes)
+
 run_query(clean_slate)
+
 run_query(load_authors)
 run_query(load_article)
+
+run_query(create_index_author)
+run_query(create_index_paper)
+
 run_query(create_relation_authors_article)
 run_query(load_time)
 run_query(load_journals)
@@ -51,3 +65,4 @@ run_query(create_relation_year_journal)
 run_query(create_citations_data)
 run_query(load_communities)
 run_query(create_relation_paper_community)
+run_query(create_relation_edition_year)
