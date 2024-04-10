@@ -13,66 +13,80 @@ def run_query(query):
             records = result.data()
             return records
 
-clean_slate = '''
-MATCH (n)
-DETACH DELETE n
-'''
-run_query(clean_slate)
+# clean_slate = '''
+# MATCH (n)
+# DETACH DELETE n
+# '''
+# run_query(clean_slate)
 
 
 
-clean_indexes = "DROP INDEX authorNameIndex IF EXISTS"
-run_query(clean_indexes)
+# clean_indexes = "DROP INDEX authorNameIndex IF EXISTS"
+# run_query(clean_indexes)
 
-clean_indexes = "DROP INDEX paperIdIndex IF EXISTS"
-run_query(clean_indexes)
+# clean_indexes = "DROP INDEX paperIdIndex IF EXISTS"
+# run_query(clean_indexes)
 
 
 
-loading_authors = """
-LOAD CSV WITH HEADERS FROM 'file:///authors_data.csv' AS row
-CREATE (a:Author { 
-    name: row.name,
-    cleaned_name: row.cleaned_name,
-    author_id: row.author_id,
-    email: row.email
-});
+# loading_authors = """
+# LOAD CSV WITH HEADERS FROM 'file:///authors_data.csv' AS row
+# CREATE (a:Author { 
+#     name: row.name,
+#     cleaned_name: row.cleaned_name,
+#     author_id: row.author_id,
+#     email: row.email
+# });
+# """
+
+# run_query(loading_authors)
+
+# loading_articles = """
+
+# LOAD CSV WITH HEADERS FROM 'file:///article_data.csv' AS row
+# CREATE (p:Paper { 
+#     year: row.year,
+#     id: row.id,
+#     title: COALESCE(row.title, ''),
+#     url: row.url,
+#     volume: row.volume,
+#     author_name: row.author_name
+# });
+# """
+
+# run_query(loading_articles)
+
+
+# create_index_paper= "CREATE INDEX authorNameIndex FOR (a:Author) ON (a.author_id);"
+# run_query(create_index_paper)
+
+# create_index_article = "CREATE INDEX paperIdIndex FOR (p:Paper) ON (p.id);"
+# run_query(create_index_article)
+
+# mathcing_authors_articles = """
+# LOAD CSV WITH HEADERS FROM 'file:///article_authors_relation.csv' AS row
+# MATCH (a:Author {author_id: row.author_id})
+# MATCH (p:Paper {id: row.article_id})
+# CREATE (a)-[:AUTHORED]->(p);
+# """
+
+# run_query(mathcing_authors_articles)
+
+
+load_time = """
+LOAD CSV WITH HEADERS FROM 'file:///time.csv' AS row
+CREATE (y:Year { year: row.year });
 """
 
-run_query(loading_authors)
+run_query(load_time)
 
-loading_articles = """
 
-LOAD CSV WITH HEADERS FROM 'file:///article_data.csv' AS row
-CREATE (p:Paper { 
-    year: row.year,
-    id: row.id,
-    title: COALESCE(row.title, ''),
-    url: row.url,
-    volume: row.volume,
-    author_name: row.author_name
-});
+load_time = """
+LOAD CSV WITH HEADERS FROM 'file:///edition_data.csv' AS row
+CREATE (y:Year { year: row.year });
 """
 
-run_query(loading_articles)
-
-
-create_index_paper= "CREATE INDEX authorNameIndex FOR (a:Author) ON (a.author_id);"
-run_query(create_index_paper)
-
-create_index_article = "CREATE INDEX paperIdIndex FOR (p:Paper) ON (p.id);"
-run_query(create_index_article)
-
-mathcing_authors_articles = """
-LOAD CSV WITH HEADERS FROM 'file:///article_authors_relation.csv' AS row
-MATCH (a:Author {author_id: row.author_id})
-MATCH (p:Paper {id: row.article_id})
-CREATE (a)-[:AUTHORED]->(p);
-"""
-
-run_query(mathcing_authors_articles)
-
-
+run_query(load_time)
 
 # query_list = '''
 # LOAD CSV WITH HEADERS FROM 'file:///authors_data.csv' AS row

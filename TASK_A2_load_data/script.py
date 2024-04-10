@@ -21,32 +21,36 @@ DETACH DELETE n
 
 
 query_list = '''
-LOAD CSV WITH HEADERS FROM 'file:///_authors_data_limit.csv' AS row
-MERGE (a:Author { 
+LOAD CSV WITH HEADERS FROM 'file:///authors_data.csv' AS row
+CREATE (a:Author { 
     name: row.name,
     cleaned_name: row.cleaned_name,
     email: row.email
 });
 
-// Import Papers
-LOAD CSV WITH HEADERS FROM 'file:///_article_data_limit.csv' AS row
-MERGE (p:Paper { 
+
+LOAD CSV WITH HEADERS FROM 'file:///article_data.csv' AS row
+CREATE (p:Paper { 
     year: row.year,
     id: row.id,
     title: COALESCE(row.title, ''),
     url: row.url,
-    volume: row.volume
-})
-WITH p, row
-MATCH (a:Author { name: row.author_name })
-MERGE (a)-[:AUTHORED]->(p);
+    volume: row.volume,
+    author_name: row.author_name
+});
+
+
+LOAD CSV WITH HEADERS FROM 'file:///article_authors_relation.csv' AS row
+MATCH (a:Author {id: row.author_id})
+MATCH (p:Paper {id: row.paper_id})
+CREATE (a)-[:AUTHORED]->(p);
 
 // import time
 LOAD CSV WITH HEADERS FROM 'file:///time.csv' AS row
 MERGE (y:Year { value: row.year });
 
 // Import Journals
-LOAD CSV WITH HEADERS FROM 'file:///_article_data_limit.csv' AS row
+LOAD CSV WITH HEADERS FROM 'file:///article_data.csv' AS row
 WITH DISTINCT row.journal AS journal
 MERGE (j:Journal { name: journal });
     
@@ -61,15 +65,13 @@ WITH row WHERE row.conference_name IS NOT NULL
 MERGE (c:Conference { conference_name: row.conference_name })
 SET c.name = COALESCE(row.conference_name, '');
 
-// NEED QUERY SPLIT HERE
-
 // Import Conference Editions
-LOAD CSV WITH HEADERS FROM 'file:///_edition_data.csv' AS row
+LOAD CSV WITH HEADERS FROM 'file:///edition_data.csv' AS row
 MERGE (e:Edition { name: row.conference_edition })
 SET e.city = row.city;
 
 // Create Relationships between Conf and Edition
-LOAD CSV WITH HEADERS FROM 'file:///_edition_data.csv' AS row
+LOAD CSV WITH HEADERS FROM 'file:///edition_data.csv' AS row
 MATCH (c:Conference { name: row.conference_name })
 MATCH (e:Edition { name: row.conference_edition, city: row.city })
 CREATE (c)-[:HAS_EDITION]->(e);
@@ -81,7 +83,7 @@ MATCH (ct:City { name: row.city })
 MERGE (c)-[:HELD_IN]->(ct);
 
 // Create relationship between Paper and Journal
-LOAD CSV WITH HEADERS FROM 'file:///_article_data_limit.csv' AS row
+LOAD CSV WITH HEADERS FROM 'file:///article_data.csv' AS row
 MATCH (p:Paper { id: row.id })
 MATCH (j:Journal)
 WHERE j.name = row.journal
@@ -95,6 +97,27 @@ MERGE (j)-[:OCCURRED_DURING]->(y);
 
 
 
+
+LOAD CSV WITH HEADERS FROM 'file:///citations_data.csv' AS row
+WITH row
+MATCH (p1:Paper { id: row.id })
+MATCH (p2:Paper { id: row.id_cited })
+MERGE (p1)-[:CITES]->(p2);
+
+
+// Create Community nodes
+LOAD CSV WITH HEADERS FROM 'file:///communities_data.csv' AS row
+MERGE (c:Community { category: row.category });
+
+// Create relationship between Paper and Community
+LOAD CSV WITH HEADERS FROM 'file:///communities_data.csv' AS row
+MATCH (p:Paper { id: row.id })
+MATCH (c:Community { category: row.category })
+MERGE (p)-[:HAS_TOPIC]->(c);
+
+
+
+
 '''
 
 
@@ -104,4 +127,3 @@ MERGE (j)-[:OCCURRED_DURING]->(y);
 run_query(cypher_query_data)
 
 result = run_query(cypher_query)
-
