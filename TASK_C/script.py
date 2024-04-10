@@ -1,7 +1,6 @@
 from neo4j import GraphDatabase
 from queries import (
-    load_communities,
-    create_relation_paper_community
+    find_relevant_authors_journal_community_database
 
 )
 
@@ -19,5 +18,4 @@ def run_query(query):
             return records
         
 
-run_query(load_communities)
-run_query(create_relation_paper_community)
+run_query(find_relevant_authors_journal_community_database)
