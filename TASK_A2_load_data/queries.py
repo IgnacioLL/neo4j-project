@@ -16,7 +16,8 @@ CREATE (p:Paper {
     title: COALESCE(row.title, ''),
     url: row.url,
     volume: row.volume,
-    author_name: row.author_name
+    author_name: row.author_name,
+    conference_edition: row.edition
 });
 """
 
@@ -32,55 +33,11 @@ MATCH (p:Paper {id: row.article_id})
 CREATE (a)-[:AUTHORED]->(p);
 """
 
-
-load_time = """
-LOAD CSV WITH HEADERS FROM 'file:///time.csv' AS row
-CREATE (y:Year { year: row.year });
-"""
-
-
 load_journals = """
 LOAD CSV WITH HEADERS FROM 'file:///article_data.csv' AS row
 WITH DISTINCT row.journal AS journal
 CREATE (j:Journal { name: journal });
 """
-
-
-load_cities = """
-LOAD CSV WITH HEADERS FROM 'file:///city_data.csv' AS row
-CREATE (ct:City { name: row.city });
-"""
-
-
-load_conference_name = """
-LOAD CSV WITH HEADERS FROM 'file:///conference_data.csv' AS row
-WITH row WHERE row.conference_name IS NOT NULL
-CREATE (c:Conference { conference_name: row.conference_name })
-SET c.name = COALESCE(row.conference_name, '');
-"""
-
-
-load_conference_edition = """
-LOAD CSV WITH HEADERS FROM 'file:///edition_data.csv' AS row
-CREATE (e:Edition { name: row.conference_edition })
-SET e.city = row.city;
-"""
-
-create_conference_edition_relation = """
-LOAD CSV WITH HEADERS FROM 'file:///edition_data.csv' AS row
-MATCH (c:Conference { name: row.conference_name })
-MATCH (e:Edition { name: row.conference_edition, city: row.city })
-CREATE (c)-[:HAS_EDITION]->(e);
-"""
-
-
-create_city_edition_relation = """
-LOAD CSV WITH HEADERS FROM 'file:///edition_data.csv' AS row
-MATCH (c:Conference { name: row.conference_name })
-MATCH (ct:City { name: row.city })
-CREATE (c)-[:HELD_IN]->(ct);
-"""
-
 
 create_relation_paper_journal = """
 LOAD CSV WITH HEADERS FROM 'file:///article_data.csv' AS row
@@ -121,11 +78,35 @@ CREATE (p)-[:HAS_TOPIC]->(c);
 """
 
 
-create_relation_edition_year = """
+load_conference = """
+LOAD CSV WITH HEADERS FROM 'file:///conference_data.csv' AS row
+CREATE (:Conference {name: row.conference_name});
+"""
+
+load_city = """
+LOAD CSV WITH HEADERS FROM 'file:///city_data.csv' AS row
+CREATE (:City {name: row.city});
+"""
+
+load_time = """
+LOAD CSV WITH HEADERS FROM 'file:///time.csv' AS row
+CREATE (:Year {year: toInteger(row.year)});
+"""
+
+load_edition = """
 LOAD CSV WITH HEADERS FROM 'file:///edition_data.csv' AS row
-MATCH (y:Year { year: row.year })
-MATCH (e:Edition { conference_edition: row.conference_edition })
-CREATE (y)-[:OCURRED_DURING]->(e);
+MERGE (edition:Edition {conference_edition: row.conference_edition})
+MERGE (conference:Conference {name: row.conference_name})
+MERGE (city:City {name: Coalesce(row.city, 'Unknown')})
+MERGE (year:Year {year: toInteger(row.year)})
+CREATE (edition)-[:HELD_IN]->(city)
+CREATE (edition)-[:IN_YEAR]->(year)
+CREATE (conference)-[:HAS_EDITION]->(edition);
 """
 
 
+create_relation_paper_edition = """
+MATCH (p:Paper), (e:Edition)
+WHERE p.conference_edition = e.conference_edition
+CREATE (p)-[:PRESENTED_IN]->(e);
+"""
