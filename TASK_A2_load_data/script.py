@@ -48,7 +48,7 @@ MERGE (y:Year { value: row.year });
 // Import Journals
 LOAD CSV WITH HEADERS FROM 'file:///_article_data_limit.csv' AS row
 WITH DISTINCT row.journal AS journal
-MERGE (j:Journal { name: journal })
+MERGE (j:Journal { name: journal });
     
 
 // Import Cities
@@ -59,7 +59,7 @@ MERGE (ct:City { name: row.city });
 LOAD CSV WITH HEADERS FROM 'file:///conference_data.csv' AS row
 WITH row WHERE row.conference_name IS NOT NULL
 MERGE (c:Conference { conference_name: row.conference_name })
-SET c.name = COALESCE(row.conference_name, '')
+SET c.name = COALESCE(row.conference_name, '');
 
 // NEED QUERY SPLIT HERE
 
@@ -86,6 +86,13 @@ MATCH (p:Paper { id: row.id })
 MATCH (j:Journal)
 WHERE j.name = row.journal
 MERGE (p)-[:PUBLISHED_IN]->(j);
+
+// Create relationship between year and journal
+LOAD CSV WITH HEADERS FROM 'file:///your_file.csv' AS row
+MATCH (j:Journal { name: row.journal })
+MATCH (y:Year { value: row.year })
+MERGE (j)-[:OCCURRED_DURING]->(y);
+
 
 
 '''
