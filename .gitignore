@@ -4,3 +4,5 @@ temporal_zone/*
 *.csv
 *.parquet
 *.crc
+
+database/*
