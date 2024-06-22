@@ -1,4 +1,29 @@
-find_relevant_authors_journal_community_database ="""
+import sys 
+import os
+
+# Add the parent directory to the Python path
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+
+from config import BASE_URL
+
+
+
+load_communities = f"""
+LOAD CSV WITH HEADERS FROM '{BASE_URL}communities_data.csv' AS row
+CREATE (co:Communities {{ 
+    article_id: row.id,
+    category: row.category
+}});
+"""
+
+create_relation_paper_community = f"""
+MATCH (p:Paper), (co:Communities)
+WHERE p.id = co.article_id
+CREATE (p)-[:TOPIC]->(co);
+"""
+
+find_relevant_authors_journal_community_database = f"""
 MATCH (co:Communities)<-[:TOPIC]-(p:Paper)-[:PUBLISHED_IN]->(j:Journal)
 WITH j, COUNT(DISTINCT p) AS papersCount
 MATCH (co:Communities)<-[:TOPIC]-(p:Paper)-[:PUBLISHED_IN]->(j:Journal)
@@ -21,11 +46,6 @@ MATCH (a:Author)-[:AUTHORED]->(topPaper)
 WITH journal_name, topPaper.title AS paper_title, topPaper.id AS paper_id, citationCount, COLLECT(a.name) AS author_names
 
 // Collect the results for each journal
-RETURN journal_name, citationCount, COLLECT({paper_id: paper_id, paper_title: paper_title, authors: author_names}) AS top_cited_papers
+RETURN journal_name, citationCount, COLLECT({{paper_id: paper_id, paper_title: paper_title, authors: author_names}}) AS top_cited_papers
 """
 
-create_relation_paper_community = """
-MATCH (p:Paper), (co:Communities)
-WHERE p.id = co.article_id
-CREATE (p)-[:TOPIC]->(co);
-"""
